@@ -2,20 +2,30 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SigninComponent } from './signin.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from 'src/app/services/auth.service';
 
 describe('SigninComponent', () => {
   let component: SigninComponent;
   let fixture: ComponentFixture<SigninComponent>;
+  let router: Router;
+  let authService: AuthService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SigninComponent ],
-      imports: [FormsModule, ReactiveFormsModule]
-    })
-    .compileComponents();
+      declarations: [SigninComponent],
+      imports: [FormsModule, ReactiveFormsModule],
+      providers: [AuthService]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SigninComponent);
+
     component = fixture.componentInstance;
+
+
+    router = TestBed.inject(Router)
+    authService = TestBed.inject(AuthService)
+
     fixture.detectChanges();
   });
 
@@ -38,5 +48,53 @@ describe('SigninComponent', () => {
     button.click()
     expect(component.login).toHaveBeenCalled()
   })
-  
+
+  // 1 - Teste de validação de formulario (loginForm)
+  it('Teste de validação de formulario (loginForm)', () => {
+    component.loginForm.setValue({
+      email: 'user',
+      password: ''
+    })
+
+    spyOn(console, 'log')
+
+    component.login()
+
+    expect(console.log).toHaveBeenCalledWith('Form inválido')
+  })
+
+  // 2 - Teste de email/senha incorretos
+  it('Teste de email/senha incorretos', () => {
+    component.loginForm.setValue({
+      email: 'user@mail.com',
+      password: '00000000'
+    })
+
+    spyOn(console, 'log')
+
+    component.login()
+
+    expect(console.log).toHaveBeenCalledWith('Login failed')
+  })
+
+  // 3 - Login com sucesso
+  it('Login com sucesso', () => {
+    // Preencha o formulário de login com valores válidos
+    component.loginForm.setValue({
+      email: 'user@mail.com',
+      password: '123456'
+    });
+
+    // Espiona o método login do serviço authService
+    spyOn(authService, 'login').and.returnValue(Promise.resolve(true));
+
+    // Espiona o método navigateByUrl do router
+    const navigateByUrlSpy = spyOn(router, 'navigateByUrl');
+
+    // Chame o método login() do componente
+    component.login();
+
+    // Verifique se o método navigateByUrl foi chamado com o valor esperado
+    expect(navigateByUrlSpy).toHaveBeenCalledWith('/home');;
+  })
 });
